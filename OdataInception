@@ -1,0 +1,243 @@
+//ODATA
+function setStatusAdmDist_Cliente() {
+
+    var lookup = Xrm.Page.getAttribute("smart_cliente").getValue();
+
+    if (lookup != null && lookup != undefined) {
+        var id = lookup[0].id;
+        id = id.replace("{", "");
+        id = id.replace("}", "");
+
+        //retorna todo o objeto ClienteXKits
+        var retornoIdKitDoc = BuscaIdKitDoc(id);
+
+        if (retornoIdKitDoc.length < 1) {
+            Xrm.Page.getAttribute("smart_statusadmdistr").setValue(4);
+            Xrm.Page.getAttribute("smart_statuscliente").setValue(5);
+            return;
+        }
+
+        //Pega o ID do KitDoc
+        var idKitDoc = getKitDocId(retornoIdKitDoc);
+
+
+
+        //Retorna todo o objeto da entidade Adm/Distr
+        var retornoIdAdmDistr = BuscaIdAdmDistr(idKitDoc)
+
+        //Pega o ID do AdmDistr
+        var idAdmDist = getAdmdistId(retornoIdAdmDistr);
+
+        //Retorna todo o objeto da Entidade Veiculo de investimentos
+        var retornoIdVeicInvest = BuscaIdVeiculoInvest(idAdmDist);
+
+        alteraStatus(retornoIdVeicInvest, retornoIdAdmDistr, retornoIdKitDoc);
+    }
+    else {
+        return;
+    }
+}
+
+function BuscaIdKitDoc(id) {
+
+
+    var oDataSetName = "smart_clientesxkitsSet";
+    var colunas = "smart_lp_KitdeDocumentos, smart_lp_statusdaconciliacao, smart_pl_statusriobravo";
+    var filtro = "smart_lp_Cliente/Id eq (guid'" + id + "')";
+    var serverUrl = Xrm.Page.context.getClientUrl();
+    var ODATA_ENDPOINT = "/XRMServices/2011/OrganizationData.svc";
+    var odataUri = serverUrl + ODATA_ENDPOINT + "/" + oDataSetName + "?";
+
+    if (colunas)
+        odataUri += "$select=" + colunas + "&";
+
+    if (filtro)
+        odataUri += "$filter=" + filtro;
+    var retorno;
+    $.ajax({
+        type: "GET",
+        contentType: "application/json; charset=utf-8",
+        datatype: "json",
+        async: false,
+        url: odataUri,
+        beforeSend: function (XMLHttpRequest) {
+            XMLHttpRequest.setRequestHeader("Accept", "application/json");
+        },
+        success: function (dados, textStatus, XmlHttpRequest) {
+            //debugger;
+
+
+            retorno = dados.d.results;
+
+
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+            //debugger;
+            alert(XMLHttpRequest.responseText);
+        }
+    });
+
+    return retorno;
+}
+
+function BuscaIdAdmDistr(id) {
+
+    var oDataSetName = "smart_kitdedocumentosSet";
+    var colunas = "smart_lp_administradorDistribuidor";
+    var filtro = "smart_kitdedocumentosId eq (guid'" + id + "')";
+    var serverUrl = Xrm.Page.context.getClientUrl();
+    var ODATA_ENDPOINT = "/XRMServices/2011/OrganizationData.svc";
+    var odataUri = serverUrl + ODATA_ENDPOINT + "/" + oDataSetName + "?";
+
+    if (colunas)
+        odataUri += "$select=" + colunas + "&";
+
+    if (filtro)
+        odataUri += "$filter=" + filtro;
+    var retorno;
+    $.ajax({
+        type: "GET",
+        contentType: "application/json; charset=utf-8",
+        datatype: "json",
+        async: false,
+        url: odataUri,
+        beforeSend: function (XMLHttpRequest) {
+            XMLHttpRequest.setRequestHeader("Accept", "application/json");
+        },
+        success: function (dados, textStatus, XmlHttpRequest) {
+            //debugger;
+            retorno = dados.d.results;
+
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+            //debugger;
+            alert(XMLHttpRequest.responseText);
+        }
+    });
+
+    return retorno;
+}
+
+function BuscaIdVeiculoInvest(id) {
+
+    var oDataSetName = "new_veiculosdeinvestimentosSet";
+    var colunas = "new_veiculosdeinvestimentosId, smart_administradordistribuidor";
+    var filtro = "smart_administradordistribuidor/Id eq (guid'" + id + "')";
+    var serverUrl = Xrm.Page.context.getClientUrl();
+    var ODATA_ENDPOINT = "/XRMServices/2011/OrganizationData.svc";
+    var odataUri = serverUrl + ODATA_ENDPOINT + "/" + oDataSetName + "?";
+
+    if (colunas)
+        odataUri += "$select=" + colunas + "&";
+
+    if (filtro)
+        odataUri += "$filter=" + filtro;
+    var retorno;
+    $.ajax({
+        type: "GET",
+        contentType: "application/json; charset=utf-8",
+        datatype: "json",
+        async: false,
+        url: odataUri,
+        beforeSend: function (XMLHttpRequest) {
+            XMLHttpRequest.setRequestHeader("Accept", "application/json");
+        },
+        success: function (dados, textStatus, XmlHttpRequest) {
+            //debugger;
+            retorno = dados.d.results;
+
+        },
+        error: function (XMLHttpRequest, textStatus, errorThrown) {
+            //debugger;
+            alert(XMLHttpRequest.responseText);
+        }
+    });
+
+    return retorno;
+}
+
+function alteraStatus(retornoVeic, retornoAdmDist, retornoKitDoc) {
+    if (Xrm.Page.getAttribute("smart_cliente").getValue() == null || Xrm.Page.getAttribute("smart_veculodeinvestimento").getValue() == null) {
+        return;
+    }
+    var statusConc = retornoKitDoc[0].smart_lp_statusdaconciliacao.Value;
+    var statusRioBravo = retornoKitDoc[0].smart_pl_statusriobravo.Value;
+
+    for (var i = 0; i < retornoVeic.length; i++) {
+        var lookupVeiculo = Xrm.Page.getAttribute("smart_veculodeinvestimento").getValue();
+        var idVeiculoContexto = lookupVeiculo[0].id;
+        idVeiculoContexto = idVeiculoContexto.replace("{", "");
+        idVeiculoContexto = idVeiculoContexto.replace("}", "");
+        idVeiculoContexto = idVeiculoContexto.toLowerCase();
+
+        if (retornoVeic[i].smart_administradordistribuidor == null) {
+            Xrm.Page.getAttribute("smart_statusadmdistr").setValue(3);
+        }
+        var veiculo = retornoVeic[i].new_veiculosdeinvestimentosId;
+
+        if (veiculo == idVeiculoContexto) {
+
+            //Altera status conciliação
+            if (statusConc == 936910000) {
+                Xrm.Page.getAttribute("smart_statusadmdistr").setValue(2);
+            }
+
+            else if (statusConc == 936910001) {
+                Xrm.Page.getAttribute("smart_statusadmdistr").setValue(1);
+            }
+
+            else if (statusConc == 936910002) {
+                Xrm.Page.getAttribute("smart_statusadmdistr").setValue(4);
+            }
+
+            //Altera Status Rio Bravo
+
+            //status pendente
+            if (statusRioBravo == 936910001) {
+                Xrm.Page.getAttribute("smart_statuscliente").setValue(1);
+            }
+
+                //status irregular
+            else if (statusRioBravo == 936910002) {
+                Xrm.Page.getAttribute("smart_statuscliente").setValue(3);
+            }
+
+                //Status Pendente original
+            else if (statusRioBravo == 936910003) {
+                Xrm.Page.getAttribute("smart_statuscliente").setValue(2);
+            }
+
+                //Status OK
+            else if (statusRioBravo == 936910004) {
+                Xrm.Page.getAttribute("smart_statuscliente").setValue(4);
+            }
+
+                //Status sem cadastro
+            else if (statusRioBravo == 936910000) {
+                Xrm.Page.getAttribute("smart_statuscliente").setValue(5);
+            }
+            return;
+        } else {
+            Xrm.Page.getAttribute("smart_statuscliente").setValue(5);
+            Xrm.Page.getAttribute("smart_statusadmdistr").setValue(4);
+        }
+    }
+}
+
+function getKitDocId(retorno) {
+
+    var id = retorno[0].smart_lp_KitdeDocumentos.Id;
+    id = id.replace("{", "");
+    id = id.replace("}", "");
+    return id;
+
+}
+
+function getAdmdistId(retorno) {
+
+    var id = retorno[0].smart_lp_administradorDistribuidor.Id;
+    id = id.replace("{", "");
+    id = id.replace("}", "");
+    return id;
+
+}
