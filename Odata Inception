@@ -42,7 +42,7 @@ function BuscaIdKitDoc(id) {
 
 
     var oDataSetName = "smart_clientesxkitsSet";
-    var colunas = "smart_lp_KitdeDocumentos, smart_lp_statusdaconciliacao, smart_pl_statusriobravo";
+    var colunas = "smart_lp_KitdeDocumentos, smart_lp_statusdaconciliacao, smart_pl_statusorg";
     var filtro = "smart_lp_Cliente/Id eq (guid'" + id + "')";
     var serverUrl = Xrm.Page.context.getClientUrl();
     var ODATA_ENDPOINT = "/XRMServices/2011/OrganizationData.svc";
@@ -161,7 +161,7 @@ function alteraStatus(retornoVeic, retornoAdmDist, retornoKitDoc) {
         return;
     }
     var statusConc = retornoKitDoc[0].smart_lp_statusdaconciliacao.Value;
-    var statusRioBravo = retornoKitDoc[0].smart_pl_statusriobravo.Value;
+    var statusorg = retornoKitDoc[0].smart_pl_statusorg.Value;
 
     for (var i = 0; i < retornoVeic.length; i++) {
         var lookupVeiculo = Xrm.Page.getAttribute("smart_veculodeinvestimento").getValue();
@@ -190,30 +190,30 @@ function alteraStatus(retornoVeic, retornoAdmDist, retornoKitDoc) {
                 Xrm.Page.getAttribute("smart_statusadmdistr").setValue(4);
             }
 
-            //Altera Status Rio Bravo
+            //Altera Status Org
 
             //status pendente
-            if (statusRioBravo == 936910001) {
+            if (statusorg == 936910001) {
                 Xrm.Page.getAttribute("smart_statuscliente").setValue(1);
             }
 
                 //status irregular
-            else if (statusRioBravo == 936910002) {
+            else if (statusorg == 936910002) {
                 Xrm.Page.getAttribute("smart_statuscliente").setValue(3);
             }
 
                 //Status Pendente original
-            else if (statusRioBravo == 936910003) {
+            else if (statusorg == 936910003) {
                 Xrm.Page.getAttribute("smart_statuscliente").setValue(2);
             }
 
                 //Status OK
-            else if (statusRioBravo == 936910004) {
+            else if (statusorg == 936910004) {
                 Xrm.Page.getAttribute("smart_statuscliente").setValue(4);
             }
 
                 //Status sem cadastro
-            else if (statusRioBravo == 936910000) {
+            else if (statusorg == 936910000) {
                 Xrm.Page.getAttribute("smart_statuscliente").setValue(5);
             }
             return;
